@@ -1,100 +1,128 @@
-# IS-LAB-PROJECT
+# PyTorShare - Secure File Sharing with Tor + AES Encryption
 
+A secure file sharing system that combines **Tor anonymity**, **AES-256 encryption**, and **RSA key exchange** for maximum security.
 
-# 🧅 Tor-Based Secure File Transfer System
+## 🔐 Security Features
 
-This project implements a **secure file transfer system** over the **Tor network**, using an **Onion Service** (hidden service) for encrypted, anonymous communication between a sender (server) and receiver (client).  
-It allows files to be shared privately using **Basic Authentication** and **SHA-256 integrity verification**.
+- ✅ **Tor Hidden Services** - Anonymous file sharing
+- ✅ **AES-256 Encryption** - File content protection
+- ✅ **RSA-2048 Key Exchange** - Secure AES key transmission
+- ✅ **SHA-256 Hashing** - File integrity verification
+- ✅ **Digital Signatures** - File authenticity proof
+- ✅ **Token-based Access** - One-time download tokens
+- ✅ **Ephemeral Keys** - One-time AES keys per transfer
 
----
+## 📋 Requirements
 
-## 📘 Overview
+- Python 3.7+
+- Tor Browser or Tor service running on port 9051
 
-### 🖥 Components:
-- **`sender.py`** — Runs a Flask server and automatically registers a Tor Hidden Service using the Tor Control Port.
-- **`receiver.py`** — Connects to the Onion address through the Tor network, authenticates, downloads the file, and verifies its SHA-256 hash.
+## 🚀 Installation
 
-The system works like this:
-
-Sender (Flask + Tor) <--- Tor Network ---> Receiver (Requests over Tor)
-
-yaml
-Copy code
-
----
-
-## ⚙️ Prerequisites
-
-Before running the project, make sure you have the following installed:
-
-| Requirement | Version | Description |
-|--------------|----------|--------------|
-| **Python** | 3.8 or higher | Needed to run both sender and receiver scripts |
-| **Tor** | Latest stable version | Used for Onion service creation and routing |
-| **Flask** | Any stable version | Backend server framework |
-| **Requests** | Latest | Used by receiver for file download |
-
----
-
-## 🧩 Installation Steps
-
-### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/<your-username>/<your-repo-name>.git
-cd <your-repo-name>
-2️⃣ Install Required Python Libraries
-bash
-Copy code
-pip install flask requests stem
-3️⃣ Install and Configure Tor
-Windows Users:
+pip install -r requirements.txt
+```
 
-Download the Tor Expert Bundle from:
-👉 https://www.torproject.org/download/tor/
+## 🔑 Setup
 
-Extract it (e.g., to C:\Tor).
+1. **Generate RSA keys:**
+   ```bash
+   python3 generate_keys.py
+   ```
 
-Navigate to that folder in PowerShell:
+2. **Make sure Tor is running:**
+   - Start Tor Browser, or
+   - Run Tor service with control port 9051
 
-bash
-Copy code
-cd C:\Tor
-Inside that folder, open the torrc file (or create one if missing) and add these lines:
+## 📤 Usage - Sender
 
-yaml
-Copy code
-ControlPort 9051
-SocksPort 9050
-CookieAuthentication 1
-DataDirectory C:\Tor\Data
-Save the file and run Tor:
+```bash
+python3 sender.py
+```
 
-bash
-Copy code
-.\tor.exe -f .\torrc
-You should see messages like:
+**In the GUI:**
+1. Click "Browse" and select a file to share
+2. Click "Start Sharing"
+3. Share the `encrypted_blob.bin` and `encrypted_aes_key.bin` files with the receiver
 
-matlab
-Copy code
-Bootstrapped 100%: Done
-🚀 Running the Sender (Server)
-1️⃣ Open a new PowerShell window in your project folder.
-2️⃣ Run:
-bash
-Copy code
-python sender.py
-3️⃣ What Happens:
-Tor is contacted via 127.0.0.1:9051.
+**Files created:**
+- `encrypted_blob.bin` - Contains token and URL (RSA encrypted)
+- `encrypted_aes_key.bin` - Contains AES encryption key (RSA encrypted)
+- `{filename}.enc` - AES-encrypted file
+- `{filename}.sig` - Digital signature
 
-A new Onion Service is created.
+## 📥 Usage - Receiver
 
-The hidden service address (like a76xqb7w2yn5ittosykqah5teyoqhnvibwqnvfhaakce5ypr2tuaqqid.onion) is displayed and saved to onion_address.txt.
+```bash
+python3 receiver.py
+```
 
-The Flask server starts locally on port 8000.
+**What happens automatically:**
+- Decrypts AES key from `encrypted_aes_key.bin`
+- Downloads encrypted file via Tor
+- Decrypts file with AES key
+- Verifies hash and signature
+- Saves decrypted file as `downloaded.txt`
 
-4️⃣ Example Output:
-css
-Copy code
-[+] Connected to Tor Control Port
-[+] Onion Service created: a76xqb7w2yn5ittosykqah5teyoqhnvibwqnvfhaakce5ypr2tuaqqid.onion
-[+] Flask server running at 127.0.0.1:8000
+## 🔒 Security Flow
+
+```
+SENDER:
+  ├─ Generate AES-256 key
+  ├─ Encrypt file with AES
+  ├─ Encrypt AES key with RSA
+  ├─ Create Tor hidden service
+  └─ Generate one-time token
+
+NETWORK:
+  ├─ Encrypted file over Tor
+  ├─ Only accessible with valid token
+  └─ Content protected by AES
+
+RECEIVER:
+  ├─ Decrypt AES key with RSA
+  ├─ Download encrypted file
+  ├─ Decrypt file with AES
+  ├─ Verify SHA-256 hash
+  └─ Verify digital signature
+```
+
+## 📁 Project Structure
+
+```
+IS-LAB-PROJECT-master/
+├── sender.py              # GUI sender application
+├── receiver.py            # Command-line receiver
+├── file_server.py         # HTTP server with token auth
+├── generate_keys.py       # RSA key pair generator
+├── check_tor.py           # Tor connection checker
+├── requirements.txt       # Python dependencies
+└── README.md             # This file
+```
+
+## 🎓 Features
+
+- **Hybrid Cryptography** - RSA + AES for optimal security and performance
+- **Ephemeral Services** - Temporary Tor hidden services
+- **Key Lifecycle Management** - Proper generation, use, and destruction
+- **CIA Triad Compliance** - Confidentiality, Integrity, Authentication
+- **Industry Standards** - Follows cryptographic best practices
+
+## ⚠️ Important Notes
+
+- Tokens expire in 5 minutes
+- Ephemeral AES keys are generated per transfer
+- Files are automatically cleaned up after use
+- Tor must be running before starting sender
+
+## 🔐 Key Files
+
+- **sender_private.pem** / **sender_public.pem** - Sender's RSA keys
+- **receiver_private.pem** / **receiver_public.pem** - Receiver's RSA keys
+- **encrypted_blob.bin** - RSA-encrypted token + URL
+- **encrypted_aes_key.bin** - RSA-encrypted AES key
+
+## 📝 License
+
+Educational project for Information Security Lab
+
